@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BÀI 13 – NGỮ PHÁP - Flashcard</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; font-family:Arial,"Microsoft YaHei",sans-serif;
+  background:#fdfbf7;
+  display:flex; justify-content:center; color:#202124;
+}
+.app{width:min(860px,96vw); padding:30px 0 40px}
+h1{text-align:center;margin:0 0 15px;font-size:32px; font-weight: bold;}
+.progress{text-align:center;font-size:18px;color:#444;margin-bottom:20px; font-weight: bold;}
+.card-wrap{perspective:1200px; cursor:pointer}
+.card{
+  width:100%; height:592px; position:relative; transform-style:preserve-3d;
+  transition:transform .55s ease;
+}
+.card.flipped{transform:rotateY(180deg)}
+.face{
+  position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden;
+  border-radius:24px; background:white; box-shadow:0 15px 45px rgba(0,0,0,.15);
+  display:flex; flex-direction:column; padding:36px; border:3px solid #eee; overflow-y:auto;
+}
+.front{justify-content:flex-start; align-items:flex-start; text-align:left}
+.back{transform:rotateY(180deg); text-align:left; align-items:flex-start; justify-content:flex-start; padding-top:40px;}
+
+.hl{color: #7c2d12; font-weight: bold; background-color: #fef08a; padding: 2px 6px; border-radius: 4px; border: 1px solid #eab308;}
+.hl-blue { color: #ffffff; font-weight: bold; background-color: #2563eb; padding: 2px 6px; border-radius: 4px; }
+.hl-red { color: #dc2626; font-weight: bold; }
+
+/* Pinyin mặt trước: căn giữa */
+.pinyin{
+  font-size:1.55em;
+  color:#666666;
+  margin-bottom:12px;
+  font-weight:bold;
+  text-align:center;
+  width:100%;
+}
+
+.zh-front { font-size: 2em; font-weight: bold; margin-bottom: 8px; line-height: 1.3; color: #dc2626; text-align: center; width: 100%; }
+
+/* Mặt sau */
+.zh-back { color: #2563eb; font-weight: bold; font-size: 1.65em; line-height: 1.2; display: inline-block; margin-top: 10px; margin-bottom: 2px; }
+.pinyin-back { color: #666666; font-weight: bold; font-size: 1.05em; display: block; margin: 2px 0; }
+.vi-back { font-size: 1.05em; color: #333; display: block; margin-bottom: 14px; }
+
+.desc-front { font-size: 1.2em; color: #333; margin: 12px 0; text-align: left; width: 100%; line-height: 1.5; }
+.desc{font-size: 1.3em; color: #333; margin: 0; text-align: left; width: 100%; line-height: 1.45;}
+
+.controls{display:flex;gap:20px;justify-content:center;margin-top:30px}
+button{
+  border:0;border-radius:20px;padding:20px 35px;font-size:22px;
+  cursor:pointer;background:#e9eef7;color:#233044; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,.1);
+}
+button.primary{background:#2563eb;color:white}
+</style>
+</head>
+
+<body>
+<div class="app">
+  <h1 id="title">BÀI 13 – NGỮ PHÁP</h1>
+  <div class="progress" id="progress"></div>
+
+  <div class="card-wrap" id="cardWrap" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="face front" id="frontFace"></div>
+      <div class="face back" id="backFace"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="event.stopPropagation();prevCard()">← TRƯỚC</button>
+    <button class="primary" onclick="event.stopPropagation();flipCard()">LẬT THẺ</button>
+    <button onclick="event.stopPropagation();nextCard()">TIẾP →</button>
+  </div>
+</div>
+
+<script>
+const cards = [
+  // THẺ 1: TÔI CÓ THỂ NGỒI KHÔNG?
+  {
+    f: "<div style='text-align:center; width:100%; font-size:1.6em; font-weight:bold; margin-bottom:5px;'>TÔI CÓ THỂ NGỒI KHÔNG?</div>" +
+       "<div class='zh-front'>我<span class='hl-blue'>可以</span>坐吗?</div>" +
+       "<div class='pinyin'>Wǒ kěyǐ zuò ma?</div>" +
+       "<div class='desc-front' style='font-size: 1.35em;'>" +
+       "<b><span class='hl-red'>可以</span> + động từ</b><br><br>" +
+       "Dùng để diễn tả khả năng, có thể làm gì đó hoặc xin phép, cho phép làm gì đó." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我可以再问您一个问题吗？</span><br><span class='pinyin-back'>Wǒ kěyǐ zài wèn nín yí gè wèntí ma?</span><span class='vi-back'>Em có thể hỏi cô thêm một câu hỏi nữa không?</span>" +
+       "<span class='zh-back'>你们可以看这本书。</span><br><span class='pinyin-back'>Nǐmen kěyǐ kàn zhè běn shū.</span><span class='vi-back'>Các em có thể xem cuốn sách này.</span>" +
+       "<span class='zh-back'>A: 我可以坐吗？</span><br><span class='pinyin-back'>A: Wǒ kěyǐ zuò ma?</span><span class='vi-back'>A: Tôi có thể ngồi không?</span>" +
+       "<span class='zh-back'>B: 可以，请坐！</span><br><span class='pinyin-back'>B: Kěyǐ, qǐng zuò!</span><span class='vi-back'>B: Được, mời ngồi!</span>" +
+       "<span class='zh-back'>你可以去问一下。</span><br><span class='pinyin-back'>Nǐ kěyǐ qù wèn yíxià.</span><span class='vi-back'>Bạn có thể đi hỏi thử xem.</span>" +
+       "<span class='zh-back'>A: 我坐这儿吗？</span><br><span class='pinyin-back'>A: A: Wǒ zuò zhè'er ma?</span><span class='vi-back'>A: Tôi ngồi đây được không?</span>" +
+       "<span class='zh-back'>B: 没问题，请坐。</span><br><span class='pinyin-back'>B: Méi wèntí, qǐng zuò.</span><span class='vi-back'>B: Không vấn đề gì, mời ngồi.</span>" +
+       "</div>"
+  },
+
+  // THẺ 2: TÔI XEM MỘT CHÚT
+  {
+    f: "<div style='text-align:center; width:100%; font-size:1.6em; font-weight:bold; margin-bottom:5px;'>TÔI XEM MỘT CHÚT</div>" +
+       "<div class='zh-front'>我看<span class='hl-blue'>一下</span></div>" +
+       "<div class='pinyin'>Wǒ kàn yíxià</div>" +
+       "<div class='desc-front' style='font-size: 1.35em;'>" +
+       "<b>Động từ + <span class='hl-red'>一下</span></b><br><br>" +
+       "Dùng để diễn tả làm một việc gì đó một lần, làm thử, hoặc làm một cách nhanh chóng, thời gian hành động ngắn." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>你可以打电话问一下。</span><br><span class='pinyin-back'>Nǐ kěyǐ dǎ diànhuà wèn yíxià.</span><span class='vi-back'>Bạn có thể gọi điện thoại hỏi thử xem.</span>" +
+       "<span class='zh-back'>请休息一下。</span><br><span class='pinyin-back'>Qǐng xiūxi yíxià.</span><span class='vi-back'>Xin nghỉ ngơi một chút.</span>" +
+       "<span class='zh-back'>你看一下吧。</span><br><span class='pinyin-back'>Nǐ kàn yíxià ba.</span><span class='vi-back'>Bạn xem thử đi.</span>" +
+       "<span class='zh-back'>我看一下。</span><br><span class='pinyin-back'>Wǒ kàn yíxià.</span><span class='vi-back'>Để tôi xem một chút.</span>" +
+       "</div>"
+  },
+
+  // THẺ 3: CHO TÔI MỘT CỐC SỮA
+  {
+    f: "<div style='text-align:center; width:100%; font-size:1.6em; font-weight:bold; margin-bottom:5px;'>CHO TÔI MỘT CỐC SỮA</div>" +
+       "<div class='zh-front'><span class='hl-blue'>给</span>我一杯牛奶</div>" +
+       "<div class='pinyin'>Gěi wǒ yì bēi niúnǎi</div>" +
+       "<div class='desc-front' style='font-size: 1.35em;'>" +
+       "<b><span class='hl-red'>给</span> + Ai/Cái gì + Cái gì</b><br><br>" +
+       "<span class='hl-red'>给</span> là động từ, mang nghĩa “cho, đưa”. Câu này có hai tân ngữ (tân ngữ tức là đối tượng của hành động), <span class='hl-red'>给</span> rồi đến người nhận, rồi đến vật được cho." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>请给我一杯牛奶。</span><br><span class='pinyin-back'>Qǐng gěi wǒ yì bēi niúnǎi.</span><span class='vi-back'>Làm ơn cho tôi một ly sữa.</span>" +
+       "<span class='zh-back'>白家月给安妮一个苹果。</span><br><span class='pinyin-back'>Bái Jiāyuè gěi Ānnī yí gè píngguǒ.</span><span class='vi-back'>Bạch Gia Nguyệt cho An Ni một quả táo.</span>" +
+       "<span class='zh-back'>请给我一杯热水。</span><br><span class='pinyin-back'>Qǐng gěi wǒ yì bēi rèshuǐ.</span><span class='vi-back'>Làm ơn cho tôi một ly nước nóng.</span>" +
+       "<span class='zh-back'>给我们一斤饺子。</span><br><span class='pinyin-back'>Gěi wǒmen yì jīn jiǎozi.</span><span class='vi-back'>Cho chúng tôi một cân sủi cảo.</span>" +
+       "<span class='zh-back'>请给我一杯茶吧。</span><br><span class='pinyin-back'>Qǐng gěi wǒ yì bēi chá ba.</span><span class='vi-back'>Làm ơn cho tôi một ly trà nhé.</span>" +
+       "</div>"
+  },
+
+  // THẺ 4: TÔI HỎI CÔ GIÁO MỘT CÂU HỎI
+  {
+    f: "<div style='text-align:center; width:100%; font-size:1.6em; font-weight:bold; margin-bottom:5px;'>TÔI HỎI CÔ GIÁO MỘT CÂU HỎI</div>" +
+       "<div class='zh-front'>我<span class='hl-blue'>问</span>老师两个问题</div>" +
+       "<div class='pinyin'>Wǒ wèn lǎoshī liǎng gè wèntí</div>" +
+       "<div class='desc-front' style='font-size: 1.35em;'>" +
+       "<b><span class='hl-red'>问</span> + Ai/Cái gì + Cái gì</b><br><br>" +
+       "<span class='hl-red'>问</span> là động từ, mang nghĩa hỏi. Câu này cũng có hai tân ngữ, <span class='hl-red'>问</span> rồi đến đối tượng được hỏi, sau đó là nội dung hỏi." +
+       "</div>",
+    b: "<div class='desc' style='line-height:1.5;'>" +
+       "<span class='zh-back'>我问老师两个问题。</span><br><span class='pinyin-back'>Wǒ wèn lǎoshī liǎng gè wèntí.</span><span class='vi-back'>Tôi hỏi cô giáo hai câu hỏi.</span>" +
+       "<span class='zh-back'>我可以再问您一个问题吗？</span><br><span class='pinyin-back'>Wǒ kěyǐ zài wèn nín yí gè wèntí ma?</span><span class='vi-back'>Tôi có thể hỏi cô thêm một câu hỏi nữa không?</span>" +
+       "</div>"
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('frontFace').innerHTML = cards[idx].f;
+  document.getElementById('backFace').innerHTML = cards[idx].b;
+  document.getElementById('progress').innerText = `Thẻ ${idx + 1} / ${cards.length}`;
+}
+
+function flipCard() {
+  document.getElementById('card').classList.toggle('flipped');
+}
+
+function nextCard() {
+  idx = (idx + 1) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+function prevCard() {
+  idx = (idx - 1 + cards.length) % cards.length;
+  document.getElementById('card').classList.remove('flipped');
+  render();
+}
+
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+    nextCard();
+    event.preventDefault();
+  } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+    prevCard();
+    event.preventDefault();
+  } else if (event.key === ' ' || event.key === 'Enter') {
+    flipCard();
+    event.preventDefault();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
